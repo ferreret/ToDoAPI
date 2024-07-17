@@ -1,13 +1,20 @@
+using Microsoft.EntityFrameworkCore;
+using TodoAPI.Data;
+using TodoAPI.Models;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+    options.UseInMemoryDatabase("ToDoDb");
+}); 
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -16,29 +23,27 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
+app.MapGet("/api/todoitems", async (AppDbContext dbContext) =>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+    var items = await dbContext.TodoItems.ToListAsync();
+    return Results.Ok(items);
+});
 
-app.MapGet("/weatherforecast", () =>
+app.MapGet("/api/todoitems/{id}", async (AppDbContext dbContext, int id) =>
 {
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
+    var item = await dbContext.TodoItems.FindAsync(id);
+    if (item is null)
+    {
+        return Results.NotFound();
+    }
+    return Results.Ok(item);
+});
+
+app.MapPost("/api/todoitems", async (AppDbContext dbContext, ToDoItem item) =>
+{
+    await dbContext.TodoItems.AddAsync(item);
+    await dbContext.SaveChangesAsync();
+    return Results.Created($"/api/todoitems/{item.Id}", item);
+});
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
