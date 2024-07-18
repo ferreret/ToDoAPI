@@ -21,3 +21,16 @@ steps:
       projects: '**/*Tests/*.csproj'
       arguments: '--configuration $(buildConfiguration)'
   
+  - task: DotNetCoreCLI@2
+    displayName: 'dotnet publish'
+    inputs:
+      command: publish
+      # Necesario para  publicar una API
+      publishWebProjects: false       
+      arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+  
+  - task: PublishBuildArtifacts@1
+    displayName: 'Upload Artifact'
+    inputs:
+      TargetPath: '$(Build.ArtifactStagingDirectory)'
+  
