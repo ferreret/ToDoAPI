@@ -14,7 +14,7 @@ namespace TodoAPI.Tests
             testToDo.Name = "Complete Azure Pipeline";
 
             // Assert
-            Assert.Equal("Complete Azure Pipeline", testToDo.Name);
+            Assert.Equal("Complete Azure Pipe", testToDo.Name);
         }
     }
 }
